@@ -1,0 +1,23 @@
+{
+    "name": "com.souheil.elhoucine.vertexanimation",
+    "version": "1.0.0",
+    "displayName": "Vertex Animation Tool",
+    "description": "A Unity tool for baking and managing animation maps for skinned mesh renderers.",
+    "unity": "2019.4",
+    "author": {
+        "name": "Souheil Elhoucine",
+        "email": "youremail@example.com",
+        "url": "https://github.com/yourgithubprofile"
+    },
+    "dependencies": {
+        "com.unity.render-pipelines.universal": ""
+    },
+    "keywords": [
+        "vertex",
+        "animation",
+        "baking",
+        "tool",
+        "unity"
+    ],
+    "license": "MIT"
+}

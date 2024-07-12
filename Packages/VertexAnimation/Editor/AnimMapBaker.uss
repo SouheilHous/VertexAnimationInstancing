@@ -1,0 +1,42 @@
+.title {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.header {
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.main {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.leftPane, .rightPane {
+    flex: 1;
+    margin: 10px;
+}
+
+.previewLabel {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.footer {
+    align-items: center;
+    margin-top: 10px;
+}
+
+.progressBar {
+    height: 20px;
+    margin-bottom: 10px;
+}
+
+.logArea {
+    height: 100px;
+    margin-bottom: 10px;
+}

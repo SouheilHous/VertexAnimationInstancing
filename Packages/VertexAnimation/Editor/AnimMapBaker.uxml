@@ -1,0 +1,28 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" noNamespaceSchemaLocation="../../../../UIElementsSchema.xsd" editor-extension-mode="True">
+    <ui:VisualElement>
+        <ui:VisualElement class="header">
+            <ui:Label text="Animation Map Baker" name="Label" class="title" style="align-items: center; -unity-text-align: upper-center; -unity-font-style: bold; font-size: 26px;" />
+        </ui:VisualElement>
+        <ui:VisualElement class="main">
+            <ui:VisualElement class="leftPane">
+                <uie:ObjectField name="targetGameObjectField" label="Target GameObject" style="-unity-font-style: bold;" />
+                <uie:ObjectField name="shaderField" label="Shader" style="-unity-font-style: bold;" />
+                <ui:TextField name="outputPathField" label="Output Path" style="-unity-font-style: bold;" />
+                <ui:TextField name="subPathField" label="Sub Path" style="-unity-font-style: bold;" />
+                <ui:EnumField name="outputTypeField" label="Output Type" style="-unity-font-style: bold;" />
+                <ui:Toggle name="enableShadowField" label="Enable Shadow" style="-unity-font-style: bold;" />
+                <ui:EnumField name="frameRateField" label="Frame Rate" style="-unity-font-style: bold;" />
+                <ui:Toggle name="supportLODField" label="Support LOD" value="false" style="-unity-font-style: bold;" />
+                <ui:Toggle name="bakeAllInOneField" label="Bake All Animations in One Texture" style="-unity-font-style: bold;" />
+                <ui:Button name="bakeButton" text="Bake" style="-unity-font-style: bold;" />
+                <ui:Label text="Materials" class="sectionTitle" style="-unity-font-style: bold;" />
+                <ui:ListView name="materialsListView" style="-unity-font-style: bold;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement class="footer">
+            <ui:ProgressBar name="progressBar" />
+            <ui:ScrollView name="logArea" style="color: rgb(255, 186, 47);" />
+            <ui:Label text="© 2024 Souheil Elhoucine" class="copyright" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
