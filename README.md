@@ -77,6 +77,11 @@ Contributions are welcome! Please follow these steps to contribute:
     ```
 6. **Open a Pull Request**: Navigate to the original repository and open a pull request.
 
+
+## Current Limitations
+
+This package is currently not ready to bake characters with more than 16k triangles. An update is coming soon to support this feature! 
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
