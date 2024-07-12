@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: SpiderManRigSpiderManRig_Combined_0 1
+  m_Name: SpiderManRigSpiderManRig_Combined_0 2
   m_Shader: {fileID: -6465566751694194690, guid: acceae858ff144ed299ae873545fd782,
     type: 3}
   m_Parent: {fileID: 0}
@@ -44,11 +44,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: d100b767cda5f684cb2c86ec2013f6dd, type: 3}
+        m_Texture: {fileID: 2800000, guid: c6ae4d0b5c7f5b04e90c79bb1f6d1ff1, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
-        m_Texture: {fileID: 2800000, guid: f3c9e1e79609b7a46bbf481bd0d22a9f, type: 3}
+        m_Texture: {fileID: 2800000, guid: c6ae4d0b5c7f5b04e90c79bb1f6d1ff1, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalMap:
@@ -76,7 +76,7 @@ Material:
     - _AlphaClip: 0
     - _AlphaToMask: 0
     - _AnimationLength: 0.8333333
-    - _AnimationTime: 0.34510422
+    - _AnimationTime: 0.25645828
     - _BUILTIN_QueueControl: 0
     - _BUILTIN_QueueOffset: 0
     - _Blend: 0

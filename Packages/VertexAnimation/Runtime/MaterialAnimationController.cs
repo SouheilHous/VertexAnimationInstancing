@@ -65,12 +65,16 @@ namespace VertexAnimation
 
         private Texture2D GetStartEndFrames()
         {
-            if (materials == null || materials.Count == 0)
-                return null;
-            foreach (var material in materials)
+
+            if (!useSingleAnimation)
             {
-                startEndFramesTexture = material.GetTexture("_StartEndFrames") as Texture2D;
-                return startEndFramesTexture;
+                if (materials == null || materials.Count == 0)
+                    return null;
+                foreach (var material in materials)
+                {
+                    startEndFramesTexture = material.GetTexture("_StartEndFrames") as Texture2D;
+                    return startEndFramesTexture;
+                }
             }
             return null;
         }
@@ -79,7 +83,7 @@ namespace VertexAnimation
         {
             if (!animationsNames)
             {
-                Debug.LogError("No animation names scriptable object is attached");
+                Debug.LogWarning("No animation names scriptable object is attached");
                 return;
             }
 
