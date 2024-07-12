@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-![Demo Video](https://img.youtube.com/vi/NrVlNjb3XuQ/0.jpg)](https://youtu.be/NrVlNjb3XuQ)
+![Demo Video](https://img.youtube.com/vi/NrVlNjb3XuQ/0.jpg)]
 
 The Vertex Animation Tool is designed to simplify the creation and management of vertex animations for animated characters. This tool is ideal for developers and artists looking to efficiently animate crowds and individual characters in various environments such as games, simulations, and visualizations. The tool leverages vertex animations to deliver smooth and realistic character movements with minimal performance overhead.
 
