@@ -9,7 +9,7 @@ The Vertex Animation Tool is designed to simplify the creation and management of
 
 ## Watch the Demo Video
 
-[![Demo Video](https://img.youtube.com/vi/NrVlNjb3XuQ/0.jpg)](https://youtu.be/NrVlNjb3XuQ)
+[![Demo Video](https://img.youtube.com/vi/NrVlNjb3XuQ/0.jpg)](https://youtu.be/UWQL-R4SXvY)
 
 ## Features
 
