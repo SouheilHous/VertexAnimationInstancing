@@ -51,9 +51,7 @@ The Vertex Animation Tool is designed to simplify the creation and management of
 The repository includes example scenes demonstrating various use cases:
 - **Stadium Scene**: A small stadium filled with animated characters.
 - **Spider-Man Meme Scene**: Multiple Spider-Man characters mimicking the iconic meme pose.
-- **City Square Festival**: A bustling city square with animated festival-goers.
-- **Concert Crowd**: A rock concert with a large, animated crowd.
-- **Sports Event**: A sports event with animated spectators and participants.
+- **War Crowd**: A war Simulation large, animated running crowd.
 
 ## Contributing
 
