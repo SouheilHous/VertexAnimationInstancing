@@ -79,6 +79,8 @@ Contributions are welcome! Please follow these steps to contribute:
 ## Current Limitations
 
 This package is currently not ready to bake characters with more than 16k triangles. An update is coming soon to support this feature! 
+This package is currently not ready to support humanoid animations.
+
 
 ## License
 
