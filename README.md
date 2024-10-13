@@ -11,6 +11,7 @@ The Vertex Animation Tool is designed to simplify the creation and management of
 
 [![Demo Video](https://img.youtube.com/vi/NrVlNjb3XuQ/0.jpg)](https://youtu.be/UWQL-R4SXvY)
 
+
 ## Features
 
 - **Bake Animations**: Bake animations into vertex animation textures for optimized playback.
