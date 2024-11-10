@@ -36,6 +36,13 @@ namespace VertexAnimation
         public int MapWidth => _mapWidth;
         public string Name => _name;
 
+        public AnimationSourceType SourceType=> _sourceType;
+
+        public Animator Animator => _animator;
+        public Animation Animation => _animation;
+
+        public SkinnedMeshRenderer SkinnedMeshRenderer => _skin;
+
         #endregion
 
         public AnimData(Animation anim, SkinnedMeshRenderer smr, string goName)
@@ -163,6 +170,7 @@ namespace VertexAnimation
         private Texture2D _startEndFramesTexture;
         private List<Vector2> _startEndFramesList = new List<Vector2>();
         private List<string> animationNames = new List<string>();
+        private AnimationSourceType _sourceType;
 
         // Method to set AnimData based on the chosen source type
         public void SetAnimData(SkinnedMeshRenderer smr, AnimationSourceType sourceType, Animation animation = null, Animator animator = null)
@@ -259,51 +267,79 @@ namespace VertexAnimation
 
         private void BakeClipFrames(AnimationClip clip, Texture2D animMap, int frameRate, int startFrame, int clipFrames)
         {
-            float sampleTime = 0;
-            float perFrameTime = clip.length / clipFrames;
-
-            _animData.Value.AnimationPlay(clip.name);
+            float perFrameTime = clip.length / clipFrames; // Time per frame
 
             for (int i = 0; i < clipFrames; i++)
             {
+                if (_animData.Value.SourceType == AnimationSourceType.Animator)
+                {
+                    // Play the animation clip and update the Animator
+                    _animData.Value.Animator.Play(clip.name, 0, i / (float)clipFrames); // Normalize time [0, 1]
+                    _animData.Value.Animator.Update(0);
+                }
+                else if (_animData.Value.SourceType == AnimationSourceType.Legacy)
+                {
+                    // Directly advance the animation and sample
+                    _animData.Value.AnimationPlay(clip.name); // Play the clip
+                    _animData.Value.Animation[clip.name].time = i * perFrameTime;
+                    _animData.Value.Animation.Sample();
+                }
+
+                // Bake the current frame's mesh data
                 _animData.Value.SampleAnimAndBakeMesh(ref _bakedMesh);
 
+                // Store the vertex positions in the texture
                 for (int j = 0; j < _bakedMesh.vertexCount; j++)
                 {
                     var vertex = _bakedMesh.vertices[j];
                     animMap.SetPixel(j, startFrame + i, new Color(vertex.x, vertex.y, vertex.z));
                 }
-
-                sampleTime += perFrameTime;
-                _animData.Value.AnimationPlay(clip.name);
             }
+
+            animMap.Apply(); // Finalize the texture
         }
+
+
 
         private void BakePerAnimClip(AnimationClip clip, int frameRate)
         {
-            var curClipFrame = Mathf.CeilToInt(clip.length * frameRate);
-            var perFrameTime = clip.length / curClipFrame;
+            int curClipFrame = Mathf.CeilToInt(clip.length * frameRate); // Total frames for the clip
+            float perFrameTime = clip.length / curClipFrame;
 
             var animMap = new Texture2D(_animData.Value.MapWidth, curClipFrame, TextureFormat.RGBAHalf, false);
             animMap.name = string.Format($"{_animData.Value.Name}_{clip.name}.animMap");
 
-            _animData.Value.AnimationPlay(clip.name);
-
-            for (var i = 0; i < curClipFrame; i++)
+            for (int i = 0; i < curClipFrame; i++)
             {
+                if (_animData.Value.SourceType == AnimationSourceType.Animator)
+                {
+                    // Play the animation clip and update the Animator
+                    _animData.Value.Animator.Play(clip.name, 0, i / (float)curClipFrame); // Normalize time [0, 1]
+                    _animData.Value.Animator.Update(0);
+                }
+                else if (_animData.Value.SourceType == AnimationSourceType.Legacy)
+                {
+                    // Directly advance the animation and sample
+                    _animData.Value.AnimationPlay(clip.name); // Play the clip
+                    _animData.Value.Animation[clip.name].time = i * perFrameTime;
+                    _animData.Value.Animation.Sample();
+                }
+
+                // Bake the current frame's mesh data
                 _animData.Value.SampleAnimAndBakeMesh(ref _bakedMesh);
 
-                for (var j = 0; j < _bakedMesh.vertexCount; j++)
+                // Store the vertex positions in the texture
+                for (int j = 0; j < _bakedMesh.vertexCount; j++)
                 {
                     var vertex = _bakedMesh.vertices[j];
                     animMap.SetPixel(j, i, new Color(vertex.x, vertex.y, vertex.z));
                 }
             }
 
-            animMap.Apply();
-            _startEndFramesList.Add(new Vector2(0, curClipFrame - 1)); // Corrected frame indexing
+            animMap.Apply(); // Finalize the texture
 
-            Debug.Log(curClipFrame);
+            _startEndFramesList.Add(new Vector2(0, curClipFrame - 1)); // Add to start-end frames list
+            Debug.Log($"Baked {curClipFrame} frames for clip {clip.name}");
 
             _bakedDataList.Add(new BakedData(animMap.name, clip.length, animMap));
         }

@@ -19,6 +19,12 @@ namespace VertexAnimation.Editor
             EditorApplication.update -= UpdateProgress;
         }
 
+       
+        private void Awake()
+        {
+            UpdateProgress();
+        }
+
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
@@ -71,14 +77,12 @@ namespace VertexAnimation.Editor
                 EditorGUILayout.Space();
             }
 
-
             EditorGUILayout.LabelField("Materials List", EditorStyles.boldLabel);
 
             SerializedProperty materialsProperty = serializedObject.FindProperty("materials");
             EditorGUILayout.PropertyField(materialsProperty, true);
 
             serializedObject.ApplyModifiedProperties();
-
 
             if (controller.materials.Count > 0)
             {
@@ -93,16 +97,23 @@ namespace VertexAnimation.Editor
                 EditorGUILayout.Space();
             }
 
-
-
+            // Handle multiple animations
             if (!controller.useSingleAnimation)
             {
                 if (controller.animationClipsNames != null && controller.animationClipsNames.Length > 0)
                 {
-                    controller.selectedAnimation = EditorGUILayout.Popup("Selected Animation", controller.selectedAnimation, controller.animationClipsNames);
+                    // Display the dropdown for animations
+                    int newSelectedAnimation = EditorGUILayout.Popup(
+                        "Selected Animation",
+                        controller.selectedAnimation,
+                        controller.animationClipsNames
+                    );
 
-                    if (controller.selectedAnimation != (int)controller.materials[0].GetFloat("_SelectedAnimation"))
+                    // Check if a new animation was selected
+                    if (newSelectedAnimation != controller.selectedAnimation)
                     {
+                        controller.selectedAnimation = newSelectedAnimation;
+
                         foreach (var material in controller.materials)
                         {
                             material.SetFloat("_SelectedAnimation", controller.selectedAnimation);
@@ -113,22 +124,36 @@ namespace VertexAnimation.Editor
                                 float startFrame = pixelColor.r;
                                 float endFrame = pixelColor.g;
 
-                                // Calculate animation length
+                                // Calculate and update animation length
                                 float animationLength = endFrame - startFrame;
                                 material.SetFloat("_AnimationLength", animationLength / controller.frameRate);
                             }
                             else
                             {
-                                Debug.Log("startEndFramesTexture is null");
+                                Debug.LogWarning("startEndFramesTexture is null");
                             }
                         }
                     }
                     else
                     {
-                        Debug.Log("selected animation is null " + controller.selectedAnimation + " and " + (int)controller.materials[0].GetFloat("_SelectedAnimation"));
+                        // Ensure `_SelectedAnimation` is initialized properly
+                        float materialSelectedAnimation = controller.materials[0].GetFloat("_SelectedAnimation");
+
+                        if (controller.selectedAnimation != (int)materialSelectedAnimation)
+                        {
+                            Debug.LogWarning(
+                                $"Mismatched selected animation! Controller: {controller.selectedAnimation}, Material: {materialSelectedAnimation}"
+                            );
+
+                            // Synchronize the controller value to the material value
+                            controller.selectedAnimation = (int)materialSelectedAnimation;
+                        }
+                        else
+                        {
+                            Debug.Log($"Selected animation is synchronized: {controller.selectedAnimation}");
+                        }
                     }
                 }
-
             }
         }
 

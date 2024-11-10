@@ -540,39 +540,57 @@ namespace VertexAnimation.Editor
 
         private Texture2D SaveStartEndFramesTexture(Texture2D texture, GameObject TargetParent, SkinnedMeshRenderer targetMesh)
         {
+            // Ensure folder exists in the AssetDatabase
             var folderPath = CreateFolder();
-            string assetPath = Path.Combine(folderPath, texture.name + ".asset");
+            string assetPath = $"{folderPath}/{texture.name}.asset";
 
-            if (!Directory.Exists(Path.GetDirectoryName(assetPath)))
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(assetPath));
-            }
-
+            // Check if texture already exists at this path
             if (savedTextures.ContainsKey(assetPath))
             {
                 return savedTextures[assetPath];
             }
 
-            AssetDatabase.CreateAsset(texture, assetPath);
-            EditorUtility.SetDirty(texture);
-            AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
-
-            animNamesFile = _baker.SaveAnimationNames();
-            animNamesFile.name = "AnimationNames";
-
-            string animationAssetPath = Path.Combine(folderPath, animNamesFile.name + ".asset");
-
-            if (!Directory.Exists(Path.GetDirectoryName(animationAssetPath)))
+            // Check if asset with the same name already exists
+            if (AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath) != null)
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(animationAssetPath));
+                Debug.LogWarning($"Asset with the name {texture.name} already exists at {assetPath}. Renaming...");
+                assetPath = $"{folderPath}/{texture.name}_{System.Guid.NewGuid()}.asset";
             }
 
-            AssetDatabase.CreateAsset(animNamesFile, animationAssetPath);
-            EditorUtility.SetDirty(animNamesFile);
+            try
+            {
+                // Create the asset
+                AssetDatabase.CreateAsset(texture, assetPath);
+                EditorUtility.SetDirty(texture);
+                AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
 
-            savedTextures[assetPath] = texture;
-            return texture;
+                // Save animation names as a separate asset
+                animNamesFile = _baker.SaveAnimationNames();
+                animNamesFile.name = "AnimationNames";
+                string animationAssetPath = $"{folderPath}/{animNamesFile.name}.asset";
+
+                // Check if animation names file already exists
+                if (AssetDatabase.LoadAssetAtPath<ShaderAnimationNames>(animationAssetPath) != null)
+                {
+                    Debug.LogWarning($"Animation names file already exists at {animationAssetPath}. Renaming...");
+                    animationAssetPath = $"{folderPath}/{animNamesFile.name}_{System.Guid.NewGuid()}.asset";
+                }
+
+                AssetDatabase.CreateAsset(animNamesFile, animationAssetPath);
+                EditorUtility.SetDirty(animNamesFile);
+
+                // Cache the saved texture
+                savedTextures[assetPath] = texture;
+                Debug.Log($"Successfully saved texture and animation names to {folderPath}");
+                return texture;
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Error saving texture asset: {ex.Message}");
+                return null;
+            }
         }
+
 
         private Material[] SaveAsMat(ref BakedData data, SkinnedMeshRenderer smr, bool singleAnimation)
         {

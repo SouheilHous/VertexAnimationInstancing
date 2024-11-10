@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace VertexAnimation
@@ -11,27 +12,34 @@ namespace VertexAnimation
         public Texture2D startEndFramesTexture;
 
         public int frameRate;
+
         [HideInInspector]
         public int selectedAnimation;
+
         [HideInInspector]
         public List<Material> materials = new List<Material>();
         [HideInInspector]
         public bool play;
         [HideInInspector]
         public ShaderAnimationNames animationsNames;
+
         [HideInInspector]
         public bool loop;
+
         [HideInInspector]
         public bool useSingleAnimation;
+
+        private float startTime;
+        private bool stop;
+        private float pausedTime;
+
         [HideInInspector]
         public bool playAtStart = false;
 
-        private float animationTime;
+
         private float duration;
         private float startFrame;
         private float endFrame;
-        private bool stop;
-        private float pausedTime;
 
         void Start()
         {
@@ -46,6 +54,7 @@ namespace VertexAnimation
 
         private void OnValidate()
         {
+
             Refresh();
         }
 
@@ -55,28 +64,52 @@ namespace VertexAnimation
             {
                 startEndFramesTexture = GetStartEndFrames();
             }
-
             LoadAnimationNames();
             CalculateFrameRate();
+            CalculateAnimationLength();
 
-            // Initialize start and end frames for the selected animation
-            if (!useSingleAnimation && startEndFramesTexture != null)
+        }
+
+        private void CalculateAnimationLength()
+        {
+            if (useSingleAnimation)
             {
-                SetStartEndFrames(selectedAnimation);
+                duration = GetDuration();
+                return;
+            }
+
+            if (startEndFramesTexture != null && materials.Count > 0)
+            {
+                // Fetch start and end frames from the texture
+                Color pixelColor = startEndFramesTexture.GetPixel(selectedAnimation, 0);
+                startFrame = pixelColor.r;
+                endFrame = pixelColor.g;
+
+                // Calculate duration
+                duration = (endFrame - startFrame) / frameRate;
+
+                // Update materials
+                foreach (var material in materials)
+                {
+                    material.SetFloat("_StartFrame", startFrame);
+                    material.SetFloat("_EndFrame", endFrame);
+                    material.SetFloat("_AnimationLength", duration);
+                    material.SetFloat("_SelectedAnimation", selectedAnimation);
+                }
             }
             else
             {
-                duration = GetDuration();
+                UnityEngine.Debug.LogWarning("StartEndFramesTexture or materials are missing!");
             }
         }
 
         private Texture2D GetStartEndFrames()
         {
+
             if (!useSingleAnimation)
             {
                 if (materials == null || materials.Count == 0)
                     return null;
-
                 foreach (var material in materials)
                 {
                     startEndFramesTexture = material.GetTexture("_StartEndFrames") as Texture2D;
@@ -90,18 +123,22 @@ namespace VertexAnimation
         {
             if (!animationsNames)
             {
-                Debug.LogWarning("No animation names scriptable object is attached");
+                UnityEngine.Debug.LogWarning("No animation names scriptable object is attached");
                 return;
             }
 
             if (animationsNames.names != null)
                 animationClipsNames = animationsNames.names;
+
+
             else
                 animationClipsNames = new string[] { "None" };
+
         }
 
         private void CalculateFrameRate()
         {
+
             if (materials == null || materials.Count == 0)
                 return;
 
@@ -121,59 +158,47 @@ namespace VertexAnimation
             }
         }
 
-        private void SetStartEndFrames(int animationIndex)
-        {
-            if (startEndFramesTexture == null)
-                return;
-
-            Color pixelColor = startEndFramesTexture.GetPixel(animationIndex, 0);
-            startFrame = pixelColor.r;
-            endFrame = pixelColor.g;
-            duration = (endFrame - startFrame) / frameRate;
-
-            foreach (var material in materials)
-            {
-                material.SetFloat("_StartFrame", startFrame);
-                material.SetFloat("_EndFrame", endFrame);
-                material.SetFloat("_AnimationLength", duration);
-                material.SetFloat("_SelectedAnimation", animationIndex);
-            }
-        }
-
         void Update()
         {
-            if (materials.Count == 0 || duration <= 0)
+            if (materials.Count == 0)
                 return;
 
-            if (stop)
-            {
-                ResetAnimation();
+            float duration = GetDuration();
+
+            if (duration <= 0)
                 return;
-            }
 
-            if (play)
-            {
-                animationTime += Time.deltaTime;
-                float normalizedTime = Mathf.Clamp01(animationTime / duration);
+            float time = Time.time;
+            float elapsedTime = time - startTime;
 
-                if (loop)
-                {
-                    normalizedTime = Mathf.Repeat(animationTime / duration, 1.0f);
-                }
-                else if (animationTime >= duration)
-                {
-                    Stop();
-                }
-
-                UpdateMaterialAnimationTime(normalizedTime);
-            }
-        }
-
-        private void UpdateMaterialAnimationTime(float normalizedTime)
-        {
             foreach (var material in materials)
             {
-                material.SetFloat("_AnimationTime", normalizedTime);
+                if (stop)
+                {
+                    material.SetFloat("_AnimationTime", 0);
+                    stop = false;
+                    play = false;
+                    continue;
+                }
+
+                if (play)
+                {
+                    float sliderValue;
+                    if (loop)
+                    {
+                        sliderValue = Mathf.Repeat(elapsedTime / duration, 1.0f);
+                    }
+                    else
+                    {
+                        sliderValue = Mathf.Clamp01(elapsedTime / duration);
+                        if (elapsedTime >= duration)
+                        {
+                            Stop();
+                        }
+                    }
+                    material.SetFloat("_AnimationTime", sliderValue);
+                }
+
                 material.SetFloat("_Play", play ? 1.0f : 0.0f);
                 material.SetFloat("_Loop", loop ? 1.0f : 0.0f);
             }
@@ -184,26 +209,25 @@ namespace VertexAnimation
             if (useSingleAnimation)
             {
                 Texture2D animationMap = materials[0].GetTexture("_AnimationMap") as Texture2D;
-                return animationMap.height / frameRate;
+                float height = animationMap.height;
+                return height / frameRate;
             }
             else
-            {
                 return materials[0].GetFloat("_AnimationLength");
-            }
+
         }
 
         public void Play()
         {
-            if (!stop)
+            if (!stop) // If not stopped, calculate the start time based on the paused time
             {
-                animationTime = pausedTime;
+                startTime = Time.time - pausedTime;
             }
-            else
+            else // If stopped, start from the beginning
             {
-                animationTime = 0f;
+                startTime = Time.time;
                 stop = false;
             }
-
             play = true;
             SetStopBool(false);
         }
@@ -211,7 +235,7 @@ namespace VertexAnimation
         public void Pause()
         {
             play = false;
-            pausedTime = animationTime;
+            pausedTime = Time.time - startTime;
             SetStopBool(false);
         }
 
@@ -220,21 +244,13 @@ namespace VertexAnimation
             play = false;
             stop = true;
             pausedTime = 0f;
-            ResetAnimation();
-        }
-
-        private void ResetAnimation()
-        {
-            animationTime = 0f;
-            foreach (var material in materials)
-            {
-                material.SetFloat("_AnimationTime", 0f);
-                material.SetFloat("_Play", 0f);
-            }
+            SetStopBool(true);
         }
 
         public void SetStopBool(bool stopValue)
         {
+            if (materials.Count == 0)
+                return;
             foreach (var material in materials)
             {
                 material.SetFloat("_Stop", stopValue ? 1.0f : 0.0f);
@@ -245,12 +261,6 @@ namespace VertexAnimation
         {
             loop = !loop;
         }
-
-        public void SetSelectedAnimation(int animationIndex)
-        {
-            selectedAnimation = animationIndex;
-            SetStartEndFrames(animationIndex);
-            Play(); // Start playing the newly selected animation
-        }
     }
+
 }
