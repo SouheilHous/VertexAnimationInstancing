@@ -11,6 +11,7 @@ The Vertex Animation Tool is designed to simplify the creation and management of
 
 [![Demo Video](https://img.youtube.com/vi/NrVlNjb3XuQ/0.jpg)](https://youtu.be/UWQL-R4SXvY)
 
+
 ## Features
 
 - **Bake Animations**: Bake animations into vertex animation textures for optimized playback.
@@ -81,6 +82,9 @@ Contributions are welcome! Please follow these steps to contribute:
 This package is currently not ready to bake characters with more than 16k triangles. An update is coming soon to support this feature! 
 This package is currently not ready to support humanoid animations.
 
+
+-Add logic to bake humanoid animations
+-Support Humanoid is in Progress
 
 ## License
 

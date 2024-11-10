@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace VertexAnimation
@@ -35,6 +36,11 @@ namespace VertexAnimation
         [HideInInspector]
         public bool playAtStart = false;
 
+
+        private float duration;
+        private float startFrame;
+        private float endFrame;
+
         void Start()
         {
             Refresh();
@@ -60,7 +66,41 @@ namespace VertexAnimation
             }
             LoadAnimationNames();
             CalculateFrameRate();
+            CalculateAnimationLength();
 
+        }
+
+        private void CalculateAnimationLength()
+        {
+            if (useSingleAnimation)
+            {
+                duration = GetDuration();
+                return;
+            }
+
+            if (startEndFramesTexture != null && materials.Count > 0)
+            {
+                // Fetch start and end frames from the texture
+                Color pixelColor = startEndFramesTexture.GetPixel(selectedAnimation, 0);
+                startFrame = pixelColor.r;
+                endFrame = pixelColor.g;
+
+                // Calculate duration
+                duration = (endFrame - startFrame) / frameRate;
+
+                // Update materials
+                foreach (var material in materials)
+                {
+                    material.SetFloat("_StartFrame", startFrame);
+                    material.SetFloat("_EndFrame", endFrame);
+                    material.SetFloat("_AnimationLength", duration);
+                    material.SetFloat("_SelectedAnimation", selectedAnimation);
+                }
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("StartEndFramesTexture or materials are missing!");
+            }
         }
 
         private Texture2D GetStartEndFrames()
@@ -83,7 +123,7 @@ namespace VertexAnimation
         {
             if (!animationsNames)
             {
-                Debug.LogWarning("No animation names scriptable object is attached");
+                UnityEngine.Debug.LogWarning("No animation names scriptable object is attached");
                 return;
             }
 
