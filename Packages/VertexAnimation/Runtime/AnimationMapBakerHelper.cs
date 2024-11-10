@@ -12,19 +12,27 @@ using System.Linq;
 
 namespace VertexAnimation
 {
+    public enum AnimationSourceType
+    {
+        Legacy,
+        Animator,
+        None
+    }
     public struct AnimData
     {
         #region FIELDS
 
         private int _vertexCount;
         private int _mapWidth;
-        private readonly List<AnimationState> _animClips;
+        private List<AnimationClip> _animClips;
         private string _name;
 
-        private Animation _animation;
+        private Animation _animation; // Legacy Animation
+        private Animator _animator;   // Animator for Generic and Humanoid
         private SkinnedMeshRenderer _skin;
+        private AnimationSourceType _sourceType;
 
-        public List<AnimationState> AnimationClips => _animClips;
+        public List<AnimationClip> AnimationClips => _animClips;
         public int MapWidth => _mapWidth;
         public string Name => _name;
 
@@ -34,17 +42,43 @@ namespace VertexAnimation
         {
             _vertexCount = smr.sharedMesh.vertexCount;
             _mapWidth = Mathf.NextPowerOfTwo(_vertexCount);
-            _animClips = new List<AnimationState>(anim.Cast<AnimationState>());
+            _animClips = new List<AnimationClip>(anim.Cast<AnimationState>().Select(state => state.clip));
             _animation = anim;
+            _animator = null;
             _skin = smr;
             _name = goName;
+            _sourceType = AnimationSourceType.Legacy;
+        }
+
+        public AnimData(Animator animator, SkinnedMeshRenderer smr, string goName)
+        {
+            _vertexCount = smr.sharedMesh.vertexCount;
+            _mapWidth = Mathf.NextPowerOfTwo(_vertexCount);
+            _animClips = new List<AnimationClip>(animator.runtimeAnimatorController.animationClips);
+            _animation = null;
+            _animator = animator;
+            _skin = smr;
+            _name = goName;
+            _sourceType = AnimationSourceType.Animator;
         }
 
         #region METHODS
 
         public void AnimationPlay(string animName)
         {
-            _animation.Play(animName);
+            if (_sourceType == AnimationSourceType.Legacy)
+            {
+                _animation.Play(animName);
+            }
+            else if (_sourceType == AnimationSourceType.Animator)
+            {
+                var clip = _animClips.FirstOrDefault(c => c.name == animName);
+                if (clip != null)
+                {
+                    _animator.Play(clip.name);
+                    _animator.Update(0); // Required to apply the first frame of the animation
+                }
+            }
         }
 
         public void SampleAnimAndBakeMesh(ref Mesh m)
@@ -55,20 +89,31 @@ namespace VertexAnimation
 
         private void SampleAnim()
         {
-            if (_animation == null)
+            if (_sourceType == AnimationSourceType.Legacy)
             {
-                Debug.LogError("animation is null!!");
-                return;
+                if (_animation == null)
+                {
+                    Debug.LogError("Animation is null!!");
+                    return;
+                }
+                _animation.Sample();
             }
-
-            _animation.Sample();
+            else if (_sourceType == AnimationSourceType.Animator)
+            {
+                if (_animator == null)
+                {
+                    Debug.LogError("Animator is null!!");
+                    return;
+                }
+                _animator.Update(0); // Sample the current frame
+            }
         }
 
         private void BakeMesh(ref Mesh m)
         {
             if (_skin == null)
             {
-                Debug.LogError("skin is null!!");
+                Debug.LogError("SkinnedMeshRenderer is null!!");
                 return;
             }
 
@@ -119,7 +164,8 @@ namespace VertexAnimation
         private List<Vector2> _startEndFramesList = new List<Vector2>();
         private List<string> animationNames = new List<string>();
 
-        public void SetAnimData(SkinnedMeshRenderer smr, Animation anim)
+        // Method to set AnimData based on the chosen source type
+        public void SetAnimData(SkinnedMeshRenderer smr, AnimationSourceType sourceType, Animation animation = null, Animator animator = null)
         {
             if (smr == null)
             {
@@ -127,14 +173,28 @@ namespace VertexAnimation
                 return;
             }
 
-            if (anim == null)
-            {
-                Debug.LogError("Animation is null!");
-                return;
-            }
-
             _bakedMesh = new Mesh();
-            _animData = new AnimData(anim, smr, smr.name);
+
+            switch (sourceType)
+            {
+                case AnimationSourceType.Legacy:
+                    if (animation == null)
+                    {
+                        Debug.LogError("Animation is null!");
+                        return;
+                    }
+                    _animData = new AnimData(animation, smr, smr.name);
+                    break;
+
+                case AnimationSourceType.Animator:
+                    if (animator == null)
+                    {
+                        Debug.LogError("Animator is null!");
+                        return;
+                    }
+                    _animData = new AnimData(animator, smr, smr.name);
+                    break;
+            }
         }
 
         public List<BakedData> Bake(int frameRate)
@@ -144,28 +204,17 @@ namespace VertexAnimation
                 Debug.LogError("Bake data is null!");
                 return _bakedDataList;
             }
+
             animationNames = new List<string>();
-            foreach (var t in _animData.Value.AnimationClips)
+            foreach (var clip in _animData.Value.AnimationClips)
             {
-                if (!t.clip.legacy)
-                {
-                    Debug.LogError($"{t.clip.name} is not legacy!");
-                    continue;
-                }
-                animationNames.Add(t.clip.name); // Save animation name
-                BakePerAnimClip(t, frameRate);
+                animationNames.Add(clip.name); // Save animation name
+                BakePerAnimClip(clip, frameRate);
             }
 
             CreateStartEndFramesTexture();
 
             return _bakedDataList;
-        }
-
-        public ShaderAnimationNames SaveAnimationNames()
-        {
-            ShaderAnimationNames animNames = ScriptableObject.CreateInstance<ShaderAnimationNames>();
-            animNames.names = animationNames.ToArray();
-            return animNames;
         }
 
         public BakedData BakeAllAnimations(int frameRate)
@@ -175,12 +224,15 @@ namespace VertexAnimation
                 Debug.LogError("Bake data is null!");
                 return default;
             }
+
             animationNames = new List<string>();
             int totalFrames = 0;
+
+            // Calculate the total number of frames and store animation names
             foreach (var clip in _animData.Value.AnimationClips)
             {
-                totalFrames += Mathf.CeilToInt(clip.clip.length * frameRate);
-                animationNames.Add(clip.clip.name); // Save animation name
+                totalFrames += Mathf.CeilToInt(clip.length * frameRate);
+                animationNames.Add(clip.name);
             }
 
             int width = _animData.Value.MapWidth;
@@ -192,7 +244,7 @@ namespace VertexAnimation
             int currentFrame = 0;
             foreach (var clip in _animData.Value.AnimationClips)
             {
-                int clipFrames = Mathf.CeilToInt(clip.clip.length * frameRate);
+                int clipFrames = Mathf.CeilToInt(clip.length * frameRate);
                 _startEndFramesList.Add(new Vector2(currentFrame, currentFrame + clipFrames - 1)); // Corrected frame indexing
                 BakeClipFrames(clip, animMap, frameRate, currentFrame, clipFrames);
                 currentFrame += clipFrames;
@@ -205,15 +257,15 @@ namespace VertexAnimation
             return new BakedData($"{_animData.Value.Name}_Combined", totalFrames / (float)frameRate, animMap);
         }
 
-        private void BakeClipFrames(AnimationState clip, Texture2D animMap, int frameRate, int startFrame, int clipFrames)
+        private void BakeClipFrames(AnimationClip clip, Texture2D animMap, int frameRate, int startFrame, int clipFrames)
         {
             float sampleTime = 0;
             float perFrameTime = clip.length / clipFrames;
 
+            _animData.Value.AnimationPlay(clip.name);
+
             for (int i = 0; i < clipFrames; i++)
             {
-                clip.time = sampleTime;
-                _animData.Value.AnimationPlay(clip.name);
                 _animData.Value.SampleAnimAndBakeMesh(ref _bakedMesh);
 
                 for (int j = 0; j < _bakedMesh.vertexCount; j++)
@@ -223,21 +275,22 @@ namespace VertexAnimation
                 }
 
                 sampleTime += perFrameTime;
+                _animData.Value.AnimationPlay(clip.name);
             }
         }
 
-        private void BakePerAnimClip(AnimationState curAnim, int frameRate)
+        private void BakePerAnimClip(AnimationClip clip, int frameRate)
         {
-            var curClipFrame = Mathf.CeilToInt(curAnim.clip.length * frameRate);
-            var perFrameTime = curAnim.length / curClipFrame;
+            var curClipFrame = Mathf.CeilToInt(clip.length * frameRate);
+            var perFrameTime = clip.length / curClipFrame;
 
             var animMap = new Texture2D(_animData.Value.MapWidth, curClipFrame, TextureFormat.RGBAHalf, false);
-            animMap.name = string.Format($"{_animData.Value.Name}_{curAnim.name}.animMap");
-            _animData.Value.AnimationPlay(curAnim.name);
+            animMap.name = string.Format($"{_animData.Value.Name}_{clip.name}.animMap");
+
+            _animData.Value.AnimationPlay(clip.name);
 
             for (var i = 0; i < curClipFrame; i++)
             {
-                curAnim.time = i * perFrameTime;
                 _animData.Value.SampleAnimAndBakeMesh(ref _bakedMesh);
 
                 for (var j = 0; j < _bakedMesh.vertexCount; j++)
@@ -246,13 +299,20 @@ namespace VertexAnimation
                     animMap.SetPixel(j, i, new Color(vertex.x, vertex.y, vertex.z));
                 }
             }
-            animMap.Apply();
 
+            animMap.Apply();
             _startEndFramesList.Add(new Vector2(0, curClipFrame - 1)); // Corrected frame indexing
 
             Debug.Log(curClipFrame);
 
-            _bakedDataList.Add(new BakedData(animMap.name, curAnim.clip.length, animMap));
+            _bakedDataList.Add(new BakedData(animMap.name, clip.length, animMap));
+        }
+
+        public ShaderAnimationNames SaveAnimationNames()
+        {
+            ShaderAnimationNames animNames = ScriptableObject.CreateInstance<ShaderAnimationNames>();
+            animNames.names = animationNames.ToArray();
+            return animNames;
         }
 
         private void CreateStartEndFramesTexture()
@@ -261,22 +321,16 @@ namespace VertexAnimation
                 return;
 
             _startEndFramesTexture = new Texture2D(_startEndFramesList.Count, 1, TextureFormat.RGBAHalf, false);
-
             _startEndFramesTexture.name = "AnimationListTimes";
 
             for (int i = 0; i < _startEndFramesList.Count; i++)
             {
                 var startEnd = _startEndFramesList[i];
                 _startEndFramesTexture.SetPixel(i, 0, new Color(startEnd.x, startEnd.y + 1, 0, 0));
-
-
             }
 
             _startEndFramesTexture.Apply();
-
-
         }
-
 
         public Texture2D GetStartEndFramesTexture()
         {

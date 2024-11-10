@@ -336,13 +336,28 @@ namespace VertexAnimation.Editor
                 }
 
                 var haveAnimation = _targetGo.TryGetComponent<Animation>(out Animation anim);
-                if (!haveAnimation || anim == null || anim.GetClipCount() == 0)
+                var haveAnimator= _targetGo.TryGetComponent<Animator>(out Animator animator);
+
+                AnimationSourceType type = AnimationSourceType.Legacy;
+
+                if(!haveAnimation && !haveAnimator) 
                 {
+                     type = AnimationSourceType.None;
+
                     EditorUtility.DisplayDialog("Error", "Target GameObject does not have Animator or animation clips!", "OK");
                     return;
                 }
 
-                _baker.SetAnimData(sm, anim);
+                if (haveAnimation )
+                {
+                    type = AnimationSourceType.Legacy;
+                }
+                else if (haveAnimator )
+                {
+                    type = AnimationSourceType.Animator;
+                }
+
+                _baker.SetAnimData(sm,type, anim, animator);
 
                 if (bakeAllInOneTexture)
                 {
