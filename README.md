@@ -13,8 +13,7 @@ The Vertex Animation Tool is designed to simplify the creation and management of
 
 
 ## Features
-- **Bake Generic/humanoid Animations**: Bake Animator animations into vertex animation textures for optimized playback and support humanoid and generic animations.
-- **Bake Animations**: Bake animations into vertex animation textures for optimized playback.
+- **Bake Legacy/Generic/Humanoid Animations**: Bake Animator animations into vertex animation textures for optimized playback and support humanoid and generic animations.
 - **LOD Support**: Support for Level of Detail (LOD) to maintain performance with high-quality visuals.
 - **Material Management**: Automatically generate and manage materials for each animated character.
 - **Flexible Animation Settings**: Customize frame rates, shadow settings, and texture baking options.
