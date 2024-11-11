@@ -11,6 +11,10 @@ The Vertex Animation Tool is designed to simplify the creation and management of
 
 [![Demo Video](https://img.youtube.com/vi/NrVlNjb3XuQ/0.jpg)](https://youtu.be/UWQL-R4SXvY)
 
+## Supported Unity / Shader Graph Versions 
+
+<img width="154" alt="Supported Version" src="https://github.com/user-attachments/assets/16591c6c-f5fe-440c-8c94-821a33aafb07">
+
 
 ## Features
 - **Bake Legacy/Generic/Humanoid Animations**: Bake Animator animations into vertex animation textures for optimized playback and support humanoid and generic animations.
