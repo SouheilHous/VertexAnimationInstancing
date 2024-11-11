@@ -3,7 +3,7 @@
   "version": "1.2.0",
   "displayName": "Vertex Animation Tool",
   "description": "A Unity tool for baking and managing animation maps for skinned mesh renderers.",
-  "unity": "2021.1",
+  "unity": "2021.2",
   "author": {
     "name": "Souheil Elhoucine",
     "email": "youremail@example.com",
